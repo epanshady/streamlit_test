@@ -57,7 +57,44 @@ if access_token:
     response = requests.get(url, headers=headers)
     
     if response.status_code == 200:
-
+        data = response.json()
+        playlist_names = [playlist['name'] for playlist in data['playlists']['items']]
+        
+        # Add a dropdown to choose a playlist
+        playlist_choice = st.selectbox('Choose a playlist:', playlist_names)
+        
+        # Fetch selected playlist details
+        selected_playlist = next(playlist for playlist in data['playlists']['items'] if playlist['name'] == playlist_choice)
+        
+        # Show playlist details
+        st.write(f"**Playlist**: {selected_playlist['name']}")
+        st.write(f"**Description**: {selected_playlist['description']}")
+        st.image(selected_playlist['images'][0]['url'], caption="Playlist Cover")
+        
+        # Simulate tracks from selected playlist
+        playlist_id = selected_playlist['id']
+        track_url = f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
+        track_response = requests.get(track_url, headers=headers)
+        
+        if track_response.status_code == 200:
+            tracks = track_response.json()['items']
+            track_names = [track['track']['name'] for track in tracks]
+            
+            # Add a dropdown to choose a song
+            track_choice = st.selectbox('Choose a song:', track_names)
+            st.write(f"You have selected: {track_choice}")
+            
+            # Simulate play or add to library action
+            if st.button('Play Song'):
+                st.success(f"Now playing: {track_choice} from {selected_playlist['name']}")
+            if st.button('Add to Library'):
+                st.success(f"Added {track_choice} to your Spotify library.")
+        else:
+            st.error(f"Failed to fetch tracks. Error: {track_response.status_code}")
+    else:
+        st.error(f"Failed to fetch playlists. Error: {response.status_code}")
+else:
+    st.error("Unable to fetch Spotify API data.")
 
 
 
