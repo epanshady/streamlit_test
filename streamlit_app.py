@@ -8,10 +8,10 @@ st.title('Music Playlist Finder')
 # Add a welcome message
 st.write('Welcome to the Music Playlist Finder')
 
-# Create a dropdown to choose a music genre
+# Create a dropdown to choose a music genre (based on available categories)
 genre_choice = st.selectbox(
-    'Choose a music genre:',
-    ['Pop', 'Rock', 'Hip-Hop', 'Jazz', 'Classical']
+    'Choose a music category:',
+    ['Made For You', 'New Releases', 'Hip-Hop', 'Country', 'Pop', 'Latin', 'Charts', 'Rock', 'R&B', 'Dance/Electronic', 'Black Music Month 2025', 'Spring', 'Workout', 'Mood', 'Party', 'Love', 'Disney', 'Netflix', 'Chill', 'Summer']
 )
 
 # Define Spotify API endpoint and access token
@@ -49,41 +49,34 @@ if access_token:
     
     if response.status_code == 200:
         data = response.json()
-        available_genres = [category['name'] for category in data['categories']['items']]
-        st.write(f"Available genres: {', '.join(available_genres)}")  # Show available genres to debug
+        available_categories = [category['name'] for category in data['categories']['items']]
+        st.write(f"Available categories: {', '.join(available_categories)}")  # Show available categories for debugging
         
-        # Check if the selected genre exists in available genres
-        if genre_choice in available_genres:
-            genre_map = {  # Mapping genres to Spotify categories
-                'Pop': 'pop',
-                'Rock': 'rock',
-                'Hip-Hop': 'hiphop',
-                'Jazz': 'jazz',
-                'Classical': 'classical'
-            }
-            genre_code = genre_map[genre_choice]
-            genre_url = f'https://api.spotify.com/v1/browse/categories/{genre_code}/playlists'
-            genre_response = requests.get(genre_url, headers=headers)
+        # Check if the selected category exists in available categories
+        if genre_choice in available_categories:
+            category_url = f'https://api.spotify.com/v1/browse/categories/{genre_choice.lower().replace(" ", "_")}/playlists'
+            category_response = requests.get(category_url, headers=headers)
             
-            if genre_response.status_code == 200:
-                genre_data = genre_response.json()
-                playlist_names = [playlist['name'] for playlist in genre_data['playlists']['items']]
+            if category_response.status_code == 200:
+                category_data = category_response.json()
+                playlist_names = [playlist['name'] for playlist in category_data['playlists']['items']]
+                
                 # Add a dropdown to choose a playlist
                 playlist_choice = st.selectbox('Choose a playlist:', playlist_names)
                 
                 # Fetch selected playlist details
-                selected_playlist = next(playlist for playlist in genre_data['playlists']['items'] if playlist['name'] == playlist_choice)
+                selected_playlist = next(playlist for playlist in category_data['playlists']['items'] if playlist['name'] == playlist_choice)
+                
                 # Show playlist details
                 st.write(f"**Playlist**: {selected_playlist['name']}")
                 st.write(f"**Description**: {selected_playlist['description']}")
                 st.image(selected_playlist['images'][0]['url'], caption="Playlist Cover")
             else:
-                st.error(f"Failed to fetch playlists. Error: {genre_response.status_code}")
+                st.error(f"Failed to fetch playlists. Error: {category_response.status_code}")
         else:
-            st.error(f"The selected genre '{genre_choice}' is not available. Please choose from the available genres.")
+            st.error(f"The selected category '{genre_choice}' is not available. Please choose from the available categories.")
     else:
         st.error(f"Failed to fetch categories. Error: {response.status_code}")
 else:
     st.error("Unable to fetch Spotify API data.")
-
 
