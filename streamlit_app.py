@@ -34,8 +34,13 @@ if response.status_code == 200:
     st.write(f"**Latitude**: {data['latitude']}")
     st.write(f"**Longitude**: {data['longitude']}")
     st.write(f"**ISP**: {data['isp']}")
-    st.write(f"**Time Zone**: {data['timezone']['name']}")
+    
+    # Check if timezone data exists before displaying
+    if 'timezone' in data and 'name' in data['timezone']:
+        st.write(f"**Time Zone**: {data['timezone']['name']}")
+    else:
+        st.write("**Time Zone**: Not available")
+
     st.write(f"**IP**: {data['ip']}")
 else:
     st.error(f"Error fetching location info: {response.status_code}")
-
