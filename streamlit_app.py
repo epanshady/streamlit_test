@@ -1,82 +1,55 @@
 import streamlit as st
 import requests
-import base64
 
 # Set the app title
-st.title('Music Playlist Finder')
+st.title("IP Geolocation Info")
 
-# Add a welcome message
-st.write('Welcome to the Music Playlist Finder')
+# Input field for IP address
+ip = st.text_input("Enter an IP address (or leave blank for your own IP):")
 
-# Create a dropdown to choose a music genre (based on available categories)
-genre_choice = st.selectbox(
-    'Choose a music category:',
-    ['Made For You', 'New Releases', 'Hip-Hop', 'Country', 'Pop', 'Latin', 'Charts', 'Rock', 'R&B', 'Dance/Electronic', 'Black Music Month 2025', 'Spring', 'Workout', 'Mood', 'Party', 'Love', 'Disney', 'Netflix', 'Chill', 'Summer']
-)
+# Use your API key here
+api_key = c08ee6a8c5764a10b465669e594dd52b
+ 
 
-# Define Spotify API endpoint and access token
-client_id = '0b17a63b23f644bdb5e229651849c604'  # Your Spotify Client ID
-client_secret = 'c4d460a6c8524536a44592574678a50e'  # Your Spotify Client Secret
-
-# Function to get Access Token from Spotify
-def get_spotify_token(client_id, client_secret):
-    auth = base64.b64encode(f"{client_id}:{client_secret}".encode('utf-8')).decode('utf-8')
-    headers = {
-        'Authorization': f'Basic {auth}',
-        'Content-Type': 'application/x-www-form-urlencoded'
-    }
-    data = {
-        'grant_type': 'client_credentials'
-    }
-    response = requests.post('https://accounts.spotify.com/api/token', headers=headers, data=data)
-    if response.status_code == 200:
-        return response.json()['access_token']
-    else:
-        st.error("Failed to get access token")
-        return None
-
-# Get the token
-access_token = get_spotify_token(client_id, client_secret)
-
-if access_token:
-    # Fetch categories using Spotify API
-    headers = {
-        'Authorization': f'Bearer {access_token}'
-    }
-    
-    url = 'https://api.spotify.com/v1/browse/categories'
-    response = requests.get(url, headers=headers)
+# If the user provides an IP address
+if ip:
+    url = f"https://ipgeolocation.io/ip-location/{ip}?apiKey={api_key}"
+    response = requests.get(url)
     
     if response.status_code == 200:
         data = response.json()
-        available_categories = [category['name'] for category in data['categories']['items']]
-        st.write(f"Available categories: {', '.join(available_categories)}")  # Show available categories for debugging
         
-        # Check if the selected category exists in available categories
-        if genre_choice in available_categories:
-            category_url = f'https://api.spotify.com/v1/browse/categories/{genre_choice.lower().replace(" ", "_")}/playlists'
-            category_response = requests.get(category_url, headers=headers)
-            
-            if category_response.status_code == 200:
-                category_data = category_response.json()
-                playlist_names = [playlist['name'] for playlist in category_data['playlists']['items']]
-                
-                # Add a dropdown to choose a playlist
-                playlist_choice = st.selectbox('Choose a playlist:', playlist_names)
-                
-                # Fetch selected playlist details
-                selected_playlist = next(playlist for playlist in category_data['playlists']['items'] if playlist['name'] == playlist_choice)
-                
-                # Show playlist details
-                st.write(f"**Playlist**: {selected_playlist['name']}")
-                st.write(f"**Description**: {selected_playlist['description']}")
-                st.image(selected_playlist['images'][0]['url'], caption="Playlist Cover")
-            else:
-                st.error(f"Failed to fetch playlists. Error: {category_response.status_code}")
-        else:
-            st.error(f"The selected category '{genre_choice}' is not available. Please choose from the available categories.")
+        # Display geolocation info
+        st.write(f"**Country**: {data['country_name']}")
+        st.write(f"**City**: {data['city']}")
+        st.write(f"**Region**: {data['state_prov']}")
+        st.write(f"**Latitude**: {data['latitude']}")
+        st.write(f"**Longitude**: {data['longitude']}")
+        st.write(f"**ISP**: {data['isp']}")
+        st.write(f"**Time Zone**: {data['timezone']['name']}")
+        st.write(f"**IP**: {data['ip']}")
     else:
-        st.error(f"Failed to fetch categories. Error: {response.status_code}")
+        st.error(f"Error fetching location info: {response.status_code}")
+        
+# If the input is empty, fetch the user's own IP location
 else:
-    st.error("Unable to fetch Spotify API data.")
+    st.write("Fetching your current IP location...")
+    url = f"https://ipgeolocation.io/ip-location?apiKey={api_key}"
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+        # Display user's IP location info
+        st.write(f"**Country**: {data['country_name']}")
+        st.write(f"**City**: {data['city']}")
+        st.write(f"**Region**: {data['state_prov']}")
+        st.write(f"**Latitude**: {data['latitude']}")
+        st.write(f"**Longitude**: {data['longitude']}")
+        st.write(f"**ISP**: {data['isp']}")
+        st.write(f"**Time Zone**: {data['timezone']['name']}")
+        st.write(f"**IP**: {data['ip']}")
+    else:
+        st.error(f"Error fetching your location info: {response.status_code}")
+
 
