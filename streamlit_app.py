@@ -8,7 +8,7 @@ st.title("IP Geolocation Info")
 ip = st.text_input("Enter an IP address (or leave blank for your own IP):")
 
 # Use your API key here
-api_key = c08ee6a8c5764a10b465669e594dd52b
+api_key = "c08ee6a8c5764a10b465669e594dd52b"
  
 
 # If the user provides an IP address
