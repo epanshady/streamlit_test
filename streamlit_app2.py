@@ -127,54 +127,6 @@ def show_alert_box():
         st.markdown(f"### 🎓 Preparedness Tip: {preparedness_tips(level)}")
 
 # --------------------------------------------
-# 📍 Map Layer with Notes
-# --------------------------------------------
-map_df = pd.DataFrame({"lat": [lat], "lon": [lon], "intensity": [om_rain[0] if om_rain is not None else 0]})
-
-# Visual Rainfall Intensity Map
-st.subheader("🌍 Visual Rainfall Intensity Map")
-
-# Creating a layer to show notes when zooming in
-text_layer = pdk.Layer(
-    "TextLayer",
-    map_df,
-    get_position='[lon, lat]',
-    get_text='"Rainfall: " + intensity + " mm"',
-    get_size=16,
-    get_color=[255, 140, 0, 255],
-    pickable=True
-)
-
-# Creating a layer to show the circle marker (for zoomed-in view)
-circle_layer = pdk.Layer(
-    "ScatterplotLayer",
-    map_df,
-    get_position='[lon, lat]',
-    get_radius=2000,  # Radius in meters, adjust as needed
-    get_color='[255, 140, 0, 160]',
-    get_fill_color='[255, 140, 0, 160]',
-    pickable=True
-)
-
-# Map view state
-view_state = pdk.ViewState(
-    latitude=lat,
-    longitude=lon,
-    zoom=10,  # Adjust zoom level to ensure you're focusing on the right area
-    pitch=40
-)
-
-# Adding layers to the map
-deck = pdk.Deck(
-    initial_view_state=view_state,
-    layers=[text_layer, circle_layer],
-    map_style='mapbox://styles/mapbox/satellite-v9'
-)
-
-# Render the map
-st.pydeck_chart(deck)
-
-# --------------------------------------------
 # 📊 Interactive Tabs
 # --------------------------------------------
 if confirmed and weather:
@@ -214,15 +166,49 @@ if confirmed and weather:
 
     with tab2:
         st.subheader("🌍 Visual Rainfall Intensity Map")
+
+        # Creating a map to display only when the "Live Map" tab is clicked
         map_df = pd.DataFrame({"lat": [lat], "lon": [lon], "intensity": [om_rain[0] if om_rain is not None else 0]})
-        st.pydeck_chart(pdk.Deck(
-            map_style='mapbox://styles/mapbox/satellite-v9',
-            initial_view_state=pdk.ViewState(latitude=lat, longitude=lon, zoom=8, pitch=40),
-            layers=[
-                pdk.Layer("ScatterplotLayer", data=map_df, get_position='[lon, lat]', get_color='[255, 140, 0, 160]', get_radius=5000),
-                pdk.Layer("HeatmapLayer", data=map_df, get_position='[lon, lat]', aggregation='MEAN', get_weight='intensity')
-            ]
-        ))
+
+        # Creating a layer to show notes when zooming in
+        text_layer = pdk.Layer(
+            "TextLayer",
+            map_df,
+            get_position='[lon, lat]',
+            get_text='"Rainfall: " + intensity + " mm"',
+            get_size=16,
+            get_color=[255, 140, 0, 255],
+            pickable=True
+        )
+
+        # Creating a layer to show the circle marker (for zoomed-in view)
+        circle_layer = pdk.Layer(
+            "ScatterplotLayer",
+            map_df,
+            get_position='[lon, lat]',
+            get_radius=2000,  # Radius in meters, adjust as needed
+            get_color='[255, 140, 0, 160]',
+            get_fill_color='[255, 140, 0, 160]',
+            pickable=True
+        )
+
+        # Map view state
+        view_state = pdk.ViewState(
+            latitude=lat,
+            longitude=lon,
+            zoom=10,  # Adjust zoom level to ensure you're focusing on the right area
+            pitch=40
+        )
+
+        # Adding layers to the map
+        deck = pdk.Deck(
+            initial_view_state=view_state,
+            layers=[text_layer, circle_layer],
+            map_style='mapbox://styles/mapbox/satellite-v9'
+        )
+
+        # Render the map
+        st.pydeck_chart(deck)
 
     with tab3:
         st.subheader("📉 Environmental Trends for Next 3 Days")
@@ -240,6 +226,6 @@ if confirmed and weather:
 
     with tab5:
         st.subheader("🔢 Compare Current Forecast to Historical Averages")
-        # Add Historical Data to Compare
         historical_df["Date"] = pd.to_datetime(historical_df["Date"])
         st.line_chart(historical_df.set_index("Date")[["Rainfall (mm)", "Max Temp (°C)"]])
+
