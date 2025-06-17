@@ -266,5 +266,3 @@ if confirmed and weather:
         st.subheader("🔢 Compare Current Forecast to Historical Averages")
         historical_df["Date"] = pd.to_datetime(historical_df["Date"])
         st.line_chart(historical_df.set_index("Date")[["Rainfall (mm)", "Max Temp (°C)"]])
-
-
