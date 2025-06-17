@@ -113,8 +113,8 @@ def preparedness_tips(level):
 weather, om_rain, historical_data = None, None, None
 if confirmed:
     try:
-        # Fetch Forecast Data (Future)
-        url = f"https://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={lat},{lon}&days=14"
+        # Fetch Forecast Data (Future) - Limit to 3 days
+        url = f"https://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={lat},{lon}&days=3"
         response = requests.get(url)
         if response.status_code == 200:
             weather = response.json()
@@ -157,13 +157,13 @@ def show_alert_box():
 # 📊 Interactive Tabs
 # --------------------------------------------
 if confirmed and weather:
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["🗕️ Forecast Calendar", "🗺️ Live Map", "📈 Trend Charts", "📅 Flood Risk Pie", "📈 Historical Comparison"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["🗕️ Forecast & Historical Data", "🗺️ Live Map", "📈 Trend Charts", "📅 Flood Risk Pie", "📈 Historical Comparison"])
 
     with tab1:
         show_alert_box()
-        st.write("### 🧾 14-Day Forecast Overview")
+        st.write("### 🧾 Forecast and Historical Data Overview")
         
-        # Display only forecast data
+        # Display Forecast Data (Future 3 days)
         forecast_df = pd.DataFrame({
             "Date": [f["date"] for f in weather["forecast"]["forecastday"]],
             "Rainfall (mm)": [f["day"]["totalprecip_mm"] for f in weather["forecast"]["forecastday"]],
@@ -171,38 +171,11 @@ if confirmed and weather:
             "Humidity (%)": [f["day"]["avghumidity"] for f in weather["forecast"]["forecastday"]],
             "Wind (kph)": [f["day"]["maxwind_kph"] for f in weather["forecast"]["forecastday"]]
         })
-        st.write("### 📅 14-Day Forecast Data")
+        
+        st.write("### 📅 3-Day Forecast Data")
         st.dataframe(forecast_df, use_container_width=True)
 
-    with tab2:
-        st.subheader("🌍 Visual Rainfall Intensity Map")
-        map_df = pd.DataFrame({"lat": [lat], "lon": [lon], "intensity": [om_rain[0] if om_rain is not None else 0]})
-        st.pydeck_chart(pdk.Deck(
-            map_style='mapbox://styles/mapbox/satellite-v9',
-            initial_view_state=pdk.ViewState(latitude=lat, longitude=lon, zoom=8, pitch=40),
-            layers=[
-                pdk.Layer("ScatterplotLayer", data=map_df, get_position='[lon, lat]', get_color='[255, 140, 0, 160]', get_radius=5000),
-                pdk.Layer("HeatmapLayer", data=map_df, get_position='[lon, lat]', aggregation='MEAN', get_weight='intensity')
-            ]
-        ))
-
-    with tab3:
-        st.subheader("📉 Environmental Trends for Next 14 Days")
-        st.line_chart(forecast_df.set_index("Date")[["Rainfall (mm)", "Max Temp (°C)"]])
-        st.bar_chart(forecast_df.set_index("Date")["Humidity (%)"])
-        st.area_chart(forecast_df.set_index("Date")["Wind (kph)"])
-
-    with tab4:
-        st.subheader("📊 Flood Risk Breakdown")
-        risk_counts = forecast_df["Rainfall (mm)"].apply(risk_level).value_counts()
-        plt.figure(figsize=(6, 6))
-        plt.pie(risk_counts, labels=risk_counts.index, autopct='%1.1f%%', startangle=140)
-        plt.axis('equal')
-        st.pyplot(plt)
-
-    with tab5:
-        st.subheader("🔢 Compare Current Forecast to Historical Averages")
-        # Adding Historical Data (7 days prior)
+        # Display Historical Data (Past 7 days)
         historical_df = pd.DataFrame()
         if historical_data:
             for data in historical_data:
@@ -217,6 +190,38 @@ if confirmed and weather:
 
         st.write("### 📜 Historical Data (Past 7 Days)")
         st.dataframe(historical_df, use_container_width=True)
+
+    with tab2:
+        st.subheader("🌍 Visual Rainfall Intensity Map")
+        map_df = pd.DataFrame({"lat": [lat], "lon": [lon], "intensity": [om_rain[0] if om_rain is not None else 0]})
+        st.pydeck_chart(pdk.Deck(
+            map_style='mapbox://styles/mapbox/satellite-v9',
+            initial_view_state=pdk.ViewState(latitude=lat, longitude=lon, zoom=8, pitch=40),
+            layers=[
+                pdk.Layer("ScatterplotLayer", data=map_df, get_position='[lon, lat]', get_color='[255, 140, 0, 160]', get_radius=5000),
+                pdk.Layer("HeatmapLayer", data=map_df, get_position='[lon, lat]', aggregation='MEAN', get_weight='intensity')
+            ]
+        ))
+
+    with tab3:
+        st.subheader("📉 Environmental Trends for Next 3 Days")
+        st.line_chart(forecast_df.set_index("Date")[["Rainfall (mm)", "Max Temp (°C)"]])
+        st.bar_chart(forecast_df.set_index("Date")["Humidity (%)"])
+        st.area_chart(forecast_df.set_index("Date")["Wind (kph)"])
+
+    with tab4:
+        st.subheader("📊 Flood Risk Breakdown")
+        risk_counts = forecast_df["Rainfall (mm)"].apply(risk_level).value_counts()
+        plt.figure(figsize=(6, 6))
+        plt.pie(risk_counts, labels=risk_counts.index, autopct='%1.1f%%', startangle=140)
+        plt.axis('equal')
+        st.pyplot(plt)
+
+    with tab5:
+        st.subheader("🔢 Compare Current Forecast to Historical Averages")
+        # Add Historical Data to Compare
+        historical_df["Date"] = pd.to_datetime(historical_df["Date"])
+        st.line_chart(historical_df.set_index("Date")[["Rainfall (mm)", "Max Temp (°C)"]])
 
 
 
