@@ -127,7 +127,7 @@ def preparedness_tips(level):
 weather, om_rain = None, None
 if confirmed:
     try:
-        url = f"https://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={lat},{lon}&days=14"
+        url = f"https://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={lat},{lon}&days=7"
         response = requests.get(url)
         if response.status_code == 200:
             weather = response.json()
