@@ -117,7 +117,8 @@ if confirmed:
         response = requests.get(url)
         if response.status_code == 200:
             weather = response.json()
-            st.write(weather)  # Debug: check the full API response here
+            # Debugging: Remove this to stop printing the raw JSON
+            # st.write(weather)  # This was showing the raw JSON, remove it for production use
     except Exception as e:
         st.error(f"❌ WeatherAPI Error: {e}")
 
@@ -199,5 +200,6 @@ if confirmed and weather:
         historical_df = forecast_df.copy()
         historical_df["Historical Rainfall"] = forecast_df["Rainfall (mm)"].apply(lambda x: max(0, x - np.random.randint(-5, 5)))
         st.line_chart(historical_df.set_index("Date")[["Rainfall (mm)", "Historical Rainfall"]])
+
 
 
