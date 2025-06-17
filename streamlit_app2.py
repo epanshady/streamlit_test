@@ -8,7 +8,7 @@ import requests
 import pandas as pd
 import pydeck as pdk
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests_cache
 from retry_requests import retry
 import matplotlib.pyplot as plt
@@ -122,11 +122,14 @@ if confirmed:
         st.error(f"❌ WeatherAPI Error: {e}")
 
     try:
-        # Fetch Historical Data (Past) for the past 7 days
-        historical_url = f"https://api.weatherapi.com/v1/history.json?key={API_KEY}&q={lat},{lon}&dt={selected_date.strftime('%Y-%m-%d')}"
-        historical_response = requests.get(historical_url)
-        if historical_response.status_code == 200:
-            historical_data = historical_response.json()
+        # Fetch Historical Data (Past) for the past 7 days (Including the date before today)
+        past_dates = [(datetime.today() - timedelta(days=i)).strftime('%Y-%m-%d') for i in range(7)]
+        historical_data = []
+        for date in past_dates:
+            historical_url = f"https://api.weatherapi.com/v1/history.json?key={API_KEY}&q={lat},{lon}&dt={date}"
+            historical_response = requests.get(historical_url)
+            if historical_response.status_code == 200:
+                historical_data.append(historical_response.json())
     except Exception as e:
         st.error(f"❌ Historical Data Error: {e}")
 
@@ -160,7 +163,7 @@ if confirmed and weather:
         show_alert_box()
         st.write("### 🧾 14-Day Forecast Overview")
         
-        # Combine Forecast and Historical Data
+        # Combine Historical Data (past 7 days) with Forecast Data (future)
         forecast_df = pd.DataFrame({
             "Date": [f["date"] for f in weather["forecast"]["forecastday"]],
             "Rainfall (mm)": [f["day"]["totalprecip_mm"] for f in weather["forecast"]["forecastday"]],
@@ -169,18 +172,22 @@ if confirmed and weather:
             "Wind (kph)": [f["day"]["maxwind_kph"] for f in weather["forecast"]["forecastday"]]
         })
         
-        # For Historical Data, we'll assume it's the data for selected_date, you can modify it as per your needs.
+        # Adding past data (historical 7 days) to the forecast data
         if historical_data:
-            historical_df = pd.DataFrame({
-                "Date": [historical_data["forecast"]["forecastday"][0]["date"]],
-                "Rainfall (mm)": [historical_data["forecast"]["forecastday"][0]["day"]["totalprecip_mm"]],
-                "Max Temp (°C)": [historical_data["forecast"]["forecastday"][0]["day"]["maxtemp_c"]],
-                "Humidity (%)": [historical_data["forecast"]["forecastday"][0]["day"]["avghumidity"]],
-                "Wind (kph)": [historical_data["forecast"]["forecastday"][0]["day"]["maxwind_kph"]]
-            })
-            
-            # Append historical data to forecast data
-            forecast_df = pd.concat([forecast_df, historical_df], ignore_index=True)
+            for data in historical_data:
+                historical_day = data["forecast"]["forecastday"][0]
+                historical_df = pd.DataFrame({
+                    "Date": [historical_day["date"]],
+                    "Rainfall (mm)": [historical_day["day"]["totalprecip_mm"]],
+                    "Max Temp (°C)": [historical_day["day"]["maxtemp_c"]],
+                    "Humidity (%)": [historical_day["day"]["avghumidity"]],
+                    "Wind (kph)": [historical_day["day"]["maxwind_kph"]]
+                })
+                forecast_df = pd.concat([historical_df, forecast_df], ignore_index=True)
+
+        # Sorting the dates in ascending order (to ensure past days come first)
+        forecast_df["Date"] = pd.to_datetime(forecast_df["Date"])
+        forecast_df = forecast_df.sort_values("Date", ascending=True)
         
         st.dataframe(forecast_df, use_container_width=True)
 
@@ -197,6 +204,7 @@ if confirmed and weather:
         ))
 
     # Other tabs will remain as in the original code
+
 
 
 
