@@ -45,8 +45,21 @@ API_KEY = "1468e5c2a4b24ce7a64140429250306"
 flood_map = {
     "Selangor": {
         "Shah Alam": (3.0738, 101.5183),
-        # Add other cities as needed
-    }
+        "Klang": (3.0339, 101.4455),
+        "Kajang": (2.9935, 101.7871),
+        "Gombak": (3.2986, 101.7250),
+        "Puchong": (3.0250, 101.6167),
+        "Ampang": (3.1500, 101.7667)
+    },
+    "Johor": {
+        "Johor Bahru": (1.4927, 103.7414),
+        "Batu Pahat": (1.8500, 102.9333),
+        "Kluang": (2.0326, 103.3180),
+        "Muar": (2.0500, 102.5667),
+        "Kota Tinggi": (1.7333, 103.9000),
+        "Pontian": (1.4833, 103.3833)
+    },
+    # Add other states and cities as necessary
 }
 
 # --------------------------------------------
@@ -83,7 +96,27 @@ confirmed = st.button("🔍 Get My Forecast")
 # --------------------------------------------
 # 📡 Weather Fetch Logic
 # --------------------------------------------
-weather, om_rain = None, None
+def risk_level(rain):
+    if rain > 50:
+        return "🔴 Extreme"
+    elif rain > 30:
+        return "🟠 High"
+    elif rain > 10:
+        return "🟡 Moderate"
+    else:
+        return "🟢 Low"
+
+def preparedness_tips(level):
+    if level == "🔴 Extreme":
+        return "Evacuate if needed, keep emergency kit ready, avoid floodwaters."
+    elif level == "🟠 High":
+        return "Charge devices, prepare emergency contact list, avoid travel in low areas."
+    elif level == "🟡 Moderate":
+        return "Monitor local alerts, keep essentials ready, stay indoors during rain."
+    else:
+        return "Stay informed and maintain general awareness."
+
+weather, om_rain, historical_data = None, None, None
 if confirmed:
     try:
         # Fetch Forecast Data (Future) - Limit to 3 days
@@ -166,22 +199,27 @@ if confirmed and weather:
 
     with tab2:
         st.subheader("🌍 Visual Rainfall Intensity Map")
+        
+        # Create a map to display only when the "Live Map" tab is clicked
+        map_df = pd.DataFrame({
+            "lat": [lat],
+            "lon": [lon],
+            "place": ["Shah Alam"],  # Example place, you can change it based on the city
+            "intensity": [om_rain[0] if om_rain is not None else 0]
+        })
 
-        # Creating a map to display only when the "Live Map" tab is clicked
-        map_df = pd.DataFrame({"lat": [lat], "lon": [lon], "intensity": [om_rain[0] if om_rain is not None else 0]})
-
-        # Creating a layer to show notes when zooming in
+        # Create the clickable area with text
         text_layer = pdk.Layer(
             "TextLayer",
             map_df,
             get_position='[lon, lat]',
-            get_text='"Place: Shah Alam, Rainfall: " + intensity + " mm"',
+            get_text='"Place: " + place + " | Rainfall: " + intensity + " mm"',
             get_size=16,
             get_color=[255, 140, 0, 255],
             pickable=True
         )
 
-        # Creating a layer to show the circle marker (for zoomed-in view)
+        # Create the scatterplot layer (circle)
         circle_layer = pdk.Layer(
             "ScatterplotLayer",
             map_df,
@@ -228,4 +266,5 @@ if confirmed and weather:
         st.subheader("🔢 Compare Current Forecast to Historical Averages")
         historical_df["Date"] = pd.to_datetime(historical_df["Date"])
         st.line_chart(historical_df.set_index("Date")[["Rainfall (mm)", "Max Temp (°C)"]])
+
 
