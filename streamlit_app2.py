@@ -2,8 +2,6 @@ import streamlit as st
 import requests
 import pandas as pd
 from datetime import datetime
-import matplotlib.pyplot as plt
-import folium
 
 # ---------- CONFIG ----------
 st.set_page_config(page_title="FloodSight Malaysia", layout="wide")
@@ -78,22 +76,6 @@ def estimate_risk(rain, humidity):
     else:
         return "🟢 Low"
 
-# ---------- PIE CHART FOR RAINFALL BREAKDOWN ----------
-def plot_pie_chart(rain):
-    labels = ['Heavy Rain', 'Light Rain', 'No Rain']
-    sizes = [rain, 100 - rain, 0]
-    plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
-    plt.axis('equal')
-    st.pyplot(plt)
-
-# ---------- MAP VISUALIZATION ----------
-def plot_map():
-    city_coords_map = city_coords[city]
-    map = folium.Map(location=city_coords_map, zoom_start=10)
-    folium.Marker(location=city_coords_map, 
-                  popup=f"{city}: {risk}").add_to(map)
-    st.components.v1.html(map._repr_html_(), height=600)
-
 # ---------- RENDER ----------
 st.markdown("---")
 if st.button("🔍 Check Flood Risk"):
@@ -103,25 +85,17 @@ if st.button("🔍 Check Flood Risk"):
         st.success("✅ Weather data retrieved successfully.")
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric(label="🌡 Temperature", value=f"{weather['temperature']} °C", delta=None, color="blue")
+            st.metric(label="🌡 Temperature", value=f"{weather['temperature']} °C")
         with col2:
-            st.metric(label="💧 Humidity", value=f"{weather['humidity']}%", delta=None, color="blue")
+            st.metric(label="💧 Humidity", value=f"{weather['humidity']}%")
         with col3:
-            st.metric(label="🌧 Rainfall", value=f"{weather['rain']} mm", delta=None, color="blue")
+            st.metric(label="🌧 Rainfall", value=f"{weather['rain']} mm")
         st.caption(f"🕒 Data time: {weather['time']}")
 
         # Estimate risk
         risk = estimate_risk(weather['rain'], weather['humidity'])
         st.sidebar.header("⚠ Flood Risk Level")
         st.sidebar.markdown(f"## {risk}")
-
-        # Pie chart for rainfall breakdown
-        st.markdown("#### 🌧 Rainfall Breakdown")
-        plot_pie_chart(weather["rain"])
-
-        # Map visualization for the city
-        st.markdown("#### 📍 City Location on Map")
-        plot_map()
 
         # Summary Table
         st.markdown("#### 📈 Summary Table")
@@ -134,7 +108,7 @@ if st.button("🔍 Check Flood Risk"):
         }])
         st.dataframe(df, use_container_width=True)
 
-        # Weather Breakdown Bar Chart
+        # Use Streamlit's bar_chart for weather stats
         st.markdown("#### 📊 Weather Breakdown")
         weather_df = pd.DataFrame({
             "Metric": ["Temperature (°C)", "Humidity (%)", "Rainfall (mm)"],
@@ -142,13 +116,13 @@ if st.button("🔍 Check Flood Risk"):
         }).set_index("Metric")
         st.bar_chart(weather_df)
 
-        # Hourly Rainfall History
-        st.markdown("#### 🌧 Hourly Rainfall History (Area Chart)")
+        # Rainfall History using line_chart
+        st.markdown("#### 🌧 Hourly Rainfall History")
         rain_data = get_rainfall_history(city)
         if rain_data:
             times, rains = zip(*rain_data)
             rain_df = pd.DataFrame({"Rainfall (mm)": rains}, index=pd.to_datetime(times))
-            st.area_chart(rain_df)
+            st.line_chart(rain_df)
         else:
             st.info("No historical rainfall data available.")
 
