@@ -44,9 +44,16 @@ API_KEY = "1468e5c2a4b24ce7a64140429250306"
 # --------------------------------------------
 flood_map = {
     "Selangor": {
-        "Shah Alam": (3.0738, 101.5183),
-        # Add other cities as needed
-    }
+        "Shah Alam": (3.0738, 101.5183), "Klang": (3.0339, 101.4455),
+        "Kajang": (2.9935, 101.7871), "Gombak": (3.2986, 101.7250),
+        "Puchong": (3.0250, 101.6167), "Ampang": (3.1500, 101.7667)
+    },
+    "Johor": {
+        "Johor Bahru": (1.4927, 103.7414), "Batu Pahat": (1.8500, 102.9333),
+        "Kluang": (2.0326, 103.3180), "Muar": (2.0500, 102.5667),
+        "Kota Tinggi": (1.7333, 103.9000), "Pontian": (1.4833, 103.3833)
+    },
+    # Add other states and cities as necessary
 }
 
 # --------------------------------------------
@@ -83,7 +90,27 @@ confirmed = st.button("🔍 Get My Forecast")
 # --------------------------------------------
 # 📡 Weather Fetch Logic
 # --------------------------------------------
-weather, om_rain = None, None
+def risk_level(rain):
+    if rain > 50:
+        return "🔴 Extreme"
+    elif rain > 30:
+        return "🟠 High"
+    elif rain > 10:
+        return "🟡 Moderate"
+    else:
+        return "🟢 Low"
+
+def preparedness_tips(level):
+    if level == "🔴 Extreme":
+        return "Evacuate if needed, keep emergency kit ready, avoid floodwaters."
+    elif level == "🟠 High":
+        return "Charge devices, prepare emergency contact list, avoid travel in low areas."
+    elif level == "🟡 Moderate":
+        return "Monitor local alerts, keep essentials ready, stay indoors during rain."
+    else:
+        return "Stay informed and maintain general awareness."
+
+weather, om_rain, historical_data = None, None, None
 if confirmed:
     try:
         # Fetch Forecast Data (Future) - Limit to 3 days
@@ -166,49 +193,15 @@ if confirmed and weather:
 
     with tab2:
         st.subheader("🌍 Visual Rainfall Intensity Map")
-
-        # Creating a map to display only when the "Live Map" tab is clicked
         map_df = pd.DataFrame({"lat": [lat], "lon": [lon], "intensity": [om_rain[0] if om_rain is not None else 0]})
-
-        # Creating a layer to show notes when zooming in
-        text_layer = pdk.Layer(
-            "TextLayer",
-            map_df,
-            get_position='[lon, lat]',
-            get_text='"Rainfall: " + intensity + " mm"',
-            get_size=16,
-            get_color=[255, 140, 0, 255],
-            pickable=True
-        )
-
-        # Creating a layer to show the circle marker (for zoomed-in view)
-        circle_layer = pdk.Layer(
-            "ScatterplotLayer",
-            map_df,
-            get_position='[lon, lat]',
-            get_radius=2000,  # Radius in meters, adjust as needed
-            get_color='[255, 140, 0, 160]',
-            get_fill_color='[255, 140, 0, 160]',
-            pickable=True
-        )
-
-        # Map view state
-        view_state = pdk.ViewState(
-            latitude=lat,
-            longitude=lon,
-            zoom=10,  # Adjust zoom level to ensure you're focusing on the right area
-            pitch=40
-        )
-
-        # Adding layers to the map
-        deck = pdk.Deck(
-            initial_view_state=view_state,
-            layers=[text_layer, circle_layer],
-            map_style='mapbox://styles/mapbox/satellite-v9'
-        )
-
-        # Render the map
-        st.pydeck_chart(deck)
+        st.pydeck_chart(pdk.Deck(
+            map_style='mapbox://styles/mapbox/satellite-v9',
+            initial_view_state=pdk.ViewState(latitude=lat, longitude=lon, zoom=8, pitch=40),
+            layers=[
+                pdk.Layer("ScatterplotLayer", data=map_df, get_position='[lon, lat]', get_color='[255, 140, 0, 160]', get_radius=5000),
+                pdk.Layer("HeatmapLayer", data=map_df, get_position='[lon, lat]', aggregation='MEAN', get_weight='intensity')
+            ]
+        ))
 
     with tab3:
         st.subheader("📉 Environmental Trends for Next 3 Days")
@@ -226,6 +219,6 @@ if confirmed and weather:
 
     with tab5:
         st.subheader("🔢 Compare Current Forecast to Historical Averages")
+        # Add Historical Data to Compare
         historical_df["Date"] = pd.to_datetime(historical_df["Date"])
         st.line_chart(historical_df.set_index("Date")[["Rainfall (mm)", "Max Temp (°C)"]])
-
