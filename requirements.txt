@@ -1,9 +1,9 @@
 streamlit
-pandas
-numpy
 requests
-requests-cache
-retry-requests
+requests_cache
+retry_requests
+pandas
+pydeck
+numpy
 matplotlib
-pydeck==0.8.0
-openmeteo-requests
+geopy
