@@ -43,13 +43,17 @@ API_KEY = "1468e5c2a4b24ce7a64140429250306"
 # 📍 City Coordinates (Flood-Prone Areas)
 # --------------------------------------------
 flood_map = {
-    # Example city coordinates (Same as in your code)
+    "Selangor": {
+        "Shah Alam": (3.0738, 101.5183), "Klang": (3.0339, 101.4455),
+        "Kajang": (2.9935, 101.7871), "Gombak": (3.2986, 101.7250),
+        "Puchong": (3.0250, 101.6167), "Ampang": (3.1500, 101.7667)
+    },
     "Johor": {
-        "Johor Bahru": (1.4927, 103.7414),
-        "Kota Tinggi": (1.7333, 103.9000),
-        # Add more cities if needed
-    }
-    # Add other states as required
+        "Johor Bahru": (1.4927, 103.7414), "Batu Pahat": (1.8500, 102.9333),
+        "Kluang": (2.0326, 103.3180), "Muar": (2.0500, 102.5667),
+        "Kota Tinggi": (1.7333, 103.9000), "Pontian": (1.4833, 103.3833)
+    },
+    # Add other states and cities as necessary
 }
 
 # --------------------------------------------
@@ -113,6 +117,7 @@ if confirmed:
         response = requests.get(url)
         if response.status_code == 200:
             weather = response.json()
+            st.write(weather)  # Debug: check the full API response here
     except Exception as e:
         st.error(f"❌ WeatherAPI Error: {e}")
 
@@ -194,4 +199,5 @@ if confirmed and weather:
         historical_df = forecast_df.copy()
         historical_df["Historical Rainfall"] = forecast_df["Rainfall (mm)"].apply(lambda x: max(0, x - np.random.randint(-5, 5)))
         st.line_chart(historical_df.set_index("Date")[["Rainfall (mm)", "Historical Rainfall"]])
+
 
