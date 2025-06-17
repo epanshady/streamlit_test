@@ -127,12 +127,21 @@ def preparedness_tips(level):
 weather, om_rain = None, None
 if confirmed:
     try:
-        url = f"https://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={lat},{lon}&days=7"
-        response = requests.get(url)
-        if response.status_code == 200:
-            weather = response.json()
-    except Exception as e:
-        st.error(f"❌ WeatherAPI Error: {e}")
+       url = f"https://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={lat},{lon}&days=14"
+response = requests.get(url)
+if response.status_code == 200:
+    weather = response.json()
+    # Parse the forecast data
+    forecast_df = pd.DataFrame({
+        "Date": [f["date"] for f in weather["forecast"]["forecastday"]],
+        "Rainfall (mm)": [f["day"]["totalprecip_mm"] for f in weather["forecast"]["forecastday"]],
+        "Max Temp (°C)": [f["day"]["maxtemp_c"] for f in weather["forecast"]["forecastday"]],
+        "Humidity (%)": [f["day"]["avghumidity"] for f in weather["forecast"]["forecastday"]],
+        "Wind (kph)": [f["day"]["maxwind_kph"] for f in weather["forecast"]["forecastday"]]
+    })
+    st.dataframe(forecast_df, use_container_width=True)
+else:
+    st.error("❌ Failed to fetch weather data")
 
     try:
         result = requests.get(f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&daily=precipitation_sum&timezone=auto")
