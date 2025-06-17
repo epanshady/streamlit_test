@@ -163,7 +163,7 @@ if confirmed and weather:
         show_alert_box()
         st.write("### 🧾 14-Day Forecast Overview")
         
-        # Combine Historical Data (past 7 days) with Forecast Data (future)
+        # Display only forecast data
         forecast_df = pd.DataFrame({
             "Date": [f["date"] for f in weather["forecast"]["forecastday"]],
             "Rainfall (mm)": [f["day"]["totalprecip_mm"] for f in weather["forecast"]["forecastday"]],
@@ -171,24 +171,7 @@ if confirmed and weather:
             "Humidity (%)": [f["day"]["avghumidity"] for f in weather["forecast"]["forecastday"]],
             "Wind (kph)": [f["day"]["maxwind_kph"] for f in weather["forecast"]["forecastday"]]
         })
-        
-        # Adding past data (historical 7 days) to the forecast data
-        if historical_data:
-            for data in historical_data:
-                historical_day = data["forecast"]["forecastday"][0]
-                historical_df = pd.DataFrame({
-                    "Date": [historical_day["date"]],
-                    "Rainfall (mm)": [historical_day["day"]["totalprecip_mm"]],
-                    "Max Temp (°C)": [historical_day["day"]["maxtemp_c"]],
-                    "Humidity (%)": [historical_day["day"]["avghumidity"]],
-                    "Wind (kph)": [historical_day["day"]["maxwind_kph"]]
-                })
-                forecast_df = pd.concat([historical_df, forecast_df], ignore_index=True)
-
-        # Sorting the dates in ascending order (to ensure past days come first)
-        forecast_df["Date"] = pd.to_datetime(forecast_df["Date"])
-        forecast_df = forecast_df.sort_values("Date", ascending=True)
-        
+        st.write("### 📅 14-Day Forecast Data")
         st.dataframe(forecast_df, use_container_width=True)
 
     with tab2:
@@ -203,7 +186,37 @@ if confirmed and weather:
             ]
         ))
 
-    # Other tabs will remain as in the original code
+    with tab3:
+        st.subheader("📉 Environmental Trends for Next 14 Days")
+        st.line_chart(forecast_df.set_index("Date")[["Rainfall (mm)", "Max Temp (°C)"]])
+        st.bar_chart(forecast_df.set_index("Date")["Humidity (%)"])
+        st.area_chart(forecast_df.set_index("Date")["Wind (kph)"])
+
+    with tab4:
+        st.subheader("📊 Flood Risk Breakdown")
+        risk_counts = forecast_df["Rainfall (mm)"].apply(risk_level).value_counts()
+        plt.figure(figsize=(6, 6))
+        plt.pie(risk_counts, labels=risk_counts.index, autopct='%1.1f%%', startangle=140)
+        plt.axis('equal')
+        st.pyplot(plt)
+
+    with tab5:
+        st.subheader("🔢 Compare Current Forecast to Historical Averages")
+        # Adding Historical Data (7 days prior)
+        historical_df = pd.DataFrame()
+        if historical_data:
+            for data in historical_data:
+                historical_day = data["forecast"]["forecastday"][0]
+                historical_df = pd.concat([historical_df, pd.DataFrame({
+                    "Date": [historical_day["date"]],
+                    "Rainfall (mm)": [historical_day["day"]["totalprecip_mm"]],
+                    "Max Temp (°C)": [historical_day["day"]["maxtemp_c"]],
+                    "Humidity (%)": [historical_day["day"]["avghumidity"]],
+                    "Wind (kph)": [historical_day["day"]["maxwind_kph"]]
+                })], ignore_index=True)
+
+        st.write("### 📜 Historical Data (Past 7 Days)")
+        st.dataframe(historical_df, use_container_width=True)
 
 
 
