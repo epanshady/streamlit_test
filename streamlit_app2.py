@@ -7,7 +7,7 @@ import folium
 
 # ---------- CONFIG ----------
 st.set_page_config(page_title="FloodSight Malaysia", layout="wide")
-WEATHERAPI_KEY = 1468e5c2a4b24ce7a64140429250306
+WEATHERAPI_KEY = "1468e5c2a4b24ce7a64140429250306"
 
 # ---------- HEADER ----------
 st.title("🌧 FloodSight Malaysia")
