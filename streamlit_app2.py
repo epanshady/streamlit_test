@@ -182,14 +182,8 @@ if go:
         plt.pie(counts, labels=counts.index, autopct="%1.1f%%")
         st.pyplot(plt)
 
-    with tabs[4]:
-        # 📜 Historical Comparison Tab
-        h = df.copy()
-        np.random.seed(0)
-        h["HistRain"] = h["Rain (mm)"] + np.random.randint(-5,6,size=len(h))
-        st.line_chart(h.set_index("Date")[["Rain (mm)", "HistRain"]])
 
-    with tabs[5]:
+    with tabs[4]:
         # 📰 News Feed Tab
         search_term = st.text_input("Search flood news for Malaysia:", "flood")
         if search_term:
