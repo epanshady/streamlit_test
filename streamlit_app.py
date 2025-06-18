@@ -197,7 +197,7 @@ if go:
     with tabs[1]:
        # --- 🗺️ Map View Tab ---
 # Create a DataFrame with latitude, longitude, and intensity data for the map
-data = pd.DataFrame({
+    data = pd.DataFrame({
     "lat": [lat],  # Latitude of the selected location
     "lon": [lon],  # Longitude of the selected location
     "intensity": [o["daily"]["precipitation_sum"][0]],  # Rainfall intensity from Open-Meteo API
