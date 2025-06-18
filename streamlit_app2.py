@@ -128,7 +128,7 @@ if go:
     })
 
     # --- 📊 Tabbed Output Sections ---
-    tabs = st.tabs(["🌧️ Forecast", "🗺️ Map View", "📈 Trends", "🧭 Risk Overview", "📜 History", "📰 News"])
+    tabs = st.tabs(["🌧️ Forecast", "🗺️ Map View", "📈 Trends", "🧭 Risk Overview", "📰 News"])
 
     with tabs[0]:
         # 💡 Forecast Tab
