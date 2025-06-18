@@ -195,26 +195,30 @@ if go:
             st.error("Failed to retrieve historical rainfall.")
 
     with tabs[1]:
-        # 🌍 Map View Tab
-        data = pd.DataFrame({
-            "lat": [lat],
-            "lon": [lon],
-            "intensity": [o["daily"]["precipitation_sum"][0]],
-            "tooltip": [f"Location: {district}, {state}\nRainfall: {o['daily']['precipitation_sum'][0]} mm"]
-        })
-        st.pydeck_chart(pdk.Deck(
-            initial_view_state=pdk.ViewState(latitude=lat, longitude=lon, zoom=8),
-            layers=[pdk.Layer(
-                "ScatterplotLayer",
-                data=data,
-                get_position='[lon, lat]',
-                get_color='[255, 0, 0, 100]',
-                get_radius=10000,
-                pickable=True,
-                opacity=0.3
-            )],
-            tooltip={"text": "{tooltip}"}
-        ))
+       # --- 🗺️ Map View Tab ---
+# Create a DataFrame with latitude, longitude, and intensity data for the map
+data = pd.DataFrame({
+    "lat": [lat],  # Latitude of the selected location
+    "lon": [lon],  # Longitude of the selected location
+    "intensity": [o["daily"]["precipitation_sum"][0]],  # Rainfall intensity from Open-Meteo API
+    "tooltip": [f"Location: {district}, {state}\nRainfall: {o['daily']['precipitation_sum'][0]} mm"]  # Tooltip content
+})
+
+# Display the map with PyDeck's ScatterplotLayer and tooltip for interactive visualization
+st.pydeck_chart(pdk.Deck(
+    initial_view_state=pdk.ViewState(latitude=lat, longitude=lon, zoom=8),  # Initial map view with zoom and position
+    layers=[pdk.Layer(
+        "ScatterplotLayer",  # Layer type: Scatter plot
+        data=data,  # Data to visualize on the map
+        get_position='[lon, lat]',  # Latitude and longitude for the position
+        get_color='[255, 0, 0, 100]',  # Color of the points (red with transparency)
+        get_radius=10000,  # Size of the radius for each point
+        pickable=True,  # Makes the points clickable for interaction
+        opacity=0.3  # Transparency of the points
+    )],
+    tooltip={"text": "{tooltip}"}  # Display the tooltip when hovering over a point
+))
+
 
     with tabs[2]:
         st.subheader("Rainfall Trend")
